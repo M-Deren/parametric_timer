@@ -17,3 +17,68 @@ entity timer is
     done_o : out   std_ulogic -- ’1’ when not counting ("not busy")
   );
 end entity timer;
+
+architecture rtl of timer is
+
+  function clamp_min_one (x : integer) return natural is -- Clamps the minimum threshold value to 1
+  begin
+
+    if (x < 1) then
+      return 1;
+    else
+      return natural(x);
+    end if;
+
+  end function clamp_min_one;
+
+  constant COUNT_THRESHOLD : natural := clamp_min_one((DELAY_G * CLK_FREQ_HZ_G) / 1 sec);
+
+  type state_type is (idle, counting);
+
+  signal state             : state_type := idle;
+  signal timer_cnt         : natural    := 0;
+  signal start_sample_vect : std_ulogic_vector(2 downto 0); -- Resampling of the start signal
+  signal start_re          : std_ulogic;
+
+begin
+
+  process (clk_i, arst_i) is
+  begin
+
+    if (arst_i = '1') then
+      state             <= idle;
+      start_sample_vect <= (others => '0');
+      start_re          <= '0';
+      timer_cnt         <= 0;
+    elsif rising_edge(clk_i) then
+      start_sample_vect <= start_sample_vect(start_sample_vect'high - 1 downto 0) & start_i; -- Resampling to avoid metastability issues in case start_i comes from a different domain
+      start_re          <= start_sample_vect(1) and not start_sample_vect(2);
+
+      case state is
+        when idle =>
+          timer_cnt <= 0;
+          if (start_re = '1') then
+            state <= counting;
+          end if;
+
+        when counting =>
+          if (timer_cnt < COUNT_THRESHOLD - 1) then
+            timer_cnt <= timer_cnt + 1;
+          else
+            timer_cnt <= 0;
+            state     <= idle;
+          end if;
+
+        when others =>
+          state <= idle;
+
+      end case;
+
+    end if;
+
+  end process;
+
+  done_o <= '1' when state = idle else
+            '0';
+
+end architecture rtl;
