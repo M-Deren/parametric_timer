@@ -10,7 +10,7 @@ library rtl;
 entity tb_timer is
   generic (
     RUNNER_CFG    : string;
-    CLK_FREQ_HZ_G : natural := 1_000_000; -- Clock frequency in Hz
+    CLK_FREQ_HZ_G : natural := 1_000; -- Clock frequency in Hz
     DELAY_G       : time    := 10 ms
   );
 end entity tb_timer;
@@ -23,7 +23,7 @@ architecture tb of tb_timer is
   signal   rst        : std_ulogic := '0';
   signal   start      : std_ulogic := '0';
   signal   done       : std_ulogic;
-  signal   time_debug : time;
+  signal   time_debug : time := 0 ms;
 
   procedure apply_reset (
     signal rst : out std_ulogic;
@@ -96,11 +96,13 @@ begin
       start        <= '1';
       wait until done = '0';
 
+      wait until rising_edge(clk);
+
       while done = '0' loop
 
-        wait until falling_edge(clk);
         time_elapsed := time_elapsed + CLK_PERIOD;
         time_debug   <= time_elapsed;
+        wait until rising_edge(clk);
 
       end loop;
 
