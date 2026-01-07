@@ -40,6 +40,17 @@ tb_timer = lib_tb.entity("tb_timer")
 
 random.seed(42)  # Reproducibility
 
+for i in range(20):
+    freq = random.randint(1, 100_000_000)
+    delay = random.randint(0, 100)
+    tb_timer.add_config(
+        name=f"{freq}Hz__Delay_{delay}_ms",
+        generics={
+            "CLK_FREQ_HZ_G": freq,
+            "DELAY_G" : delay*1_000_000_000
+        }
+    )
+
 # -----------------------------------------------------------------------------
 # Default configuration (no generics overridden)
 # -----------------------------------------------------------------------------
