@@ -1,28 +1,28 @@
-name: VUnit CI
-
-on:
-  push:
-  pull_request:
-
 jobs:
   vunit-ghdl:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📥 Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: 🐍 Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-    - name: 🔧 Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y ghdl
-        pip install vunit_hdl
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git python3-pip gnat llvm clang cmake zlib1g-dev
+          pip install vunit_hdl
+          # Install GHDL with LLVM backend
+          git clone https://github.com/ghdl/ghdl.git
+          cd ghdl
+          ./configure --with-llvm
+          make -j$(nproc)
+          sudo make install
+          cd ..
 
-    - name: ▶️ Run VUnit tests
-      run: |
-        python run.py
+      - name: Run VUnit tests
+        run: python run.py
