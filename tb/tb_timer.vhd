@@ -70,7 +70,9 @@ begin
 
   main : process is
 
-    variable time_delay : time  := 0 ns;
+    variable time_delay   : time  := 0 ns;
+    variable start_time   : time := 0 ns;
+    variable time_elapsed : time := 0 ns;
 
   begin
 
@@ -98,25 +100,41 @@ begin
       else
         time_delay := CLK_PERIOD;
       end if;
-      time_precision <= time_delay / 100;
+      time_precision <= time_delay / 500;
       start          <= '1';
       wait until done = '0';
+      start_time     := now;
       start          <= '0';
-      wait for (time_delay - time_precision);
-      if (done = '0') then
-        wait for 2 * (time_precision);
-        if (done = '1') then
-          check_passed;
-        else
-          log("Time = " & time'image(time_delay));
-          log("Period = " & time'image(CLK_PERIOD));
-          check_failed("Done should be high right after the timeout");
-        end if;
+      wait until done = '1';
+      time_elapsed   := now - start_time;
+      if (time_elapsed > time_delay - time_precision and time_elapsed < time_delay + time_precision) then
+        check_passed;
       else
-        log("Time = " & time'image(time_delay));
+        log("Time_elapsed = " & time'image(time_elapsed));
+        log("Time_precision = " & time'image(time_precision));
+        if (time_elapsed > time_delay) then
+          log("Time_difference = " & time'image(time_elapsed - time_delay));
+        else
+          log("Time_difference = " & time'image(time_delay - time_elapsed));
+        end if;
         log("Period = " & time'image(CLK_PERIOD));
-        check_failed("Done should be low right before the timeout");
+        check_failed("Elapsed time does not correspond to the delay");
       end if;
+      -- wait for (time_delay - time_precision);
+      -- if (done = '0') then
+      --   wait for 2 * (time_precision);
+      --   if (done = '1') then
+      --     check_passed;
+      --   else
+      --     log("Time = " & time'image(time_delay));
+      --     log("Period = " & time'image(CLK_PERIOD));
+      --     check_failed("Done should be high right after the timeout");
+      --   end if;
+      -- else
+      --   log("Time = " & time'image(time_delay));
+      --   log("Period = " & time'image(CLK_PERIOD));
+      --   check_failed("Done should be low right before the timeout");
+      -- end if;
 
       --   while done = '0' loop
 
