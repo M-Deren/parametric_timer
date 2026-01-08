@@ -6,12 +6,12 @@
 entity timer is
   generic (
     CLK_FREQ_HZ_G : natural;          -- Clock frequency in Hz
-    DELAY_G       : time
+    DELAY_G       : time              -- Delay duration, e.g., 100 ms
   );
   port (
     clk_i         : in    std_ulogic;
 
-    arst_i        : in    std_ulogic; -- Delay duration, e.g., 100 ms
+    arst_i        : in    std_ulogic;
     start_i       : in    std_ulogic; -- No effect if not done_o
 
     done_o        : out   std_ulogic  -- ’1’ when not counting ("not busy")
@@ -20,10 +20,10 @@ end entity timer;
 
 architecture rtl of timer is
 
-  function clamp_min_one (x : integer) return natural is      -- Clamps the minimum threshold value to 1
+  function clamp_min_one (x : real) return natural is                          -- Clamps the minimum threshold value to 1
   begin
 
-    if (x < 1) then
+    if (x < 1.0) then
       return 1;
     else
       return natural(x);
@@ -31,14 +31,15 @@ architecture rtl of timer is
 
   end function clamp_min_one;
 
-  constant CLK_PERIOD        : time := (1 sec / CLK_FREQ_HZ_G);
-  constant COUNT_THRESHOLD   : natural := clamp_min_one(DELAY_G / CLK_PERIOD);
+  constant CLK_PERIOD        : real := (1.0 / real(CLK_FREQ_HZ_G));
+  constant DELAY_REAL_NS     : real := real(DELAY_G / 1 ns) / 1_000_000_000.0; -- Delay in ns as a floating number
+  constant COUNT_THRESHOLD   : natural := natural(ceil(DELAY_REAL_NS / CLK_PERIOD));
 
   type     state_type is (idle, counting);
 
   signal   state             : state_type := idle;
   signal   timer_cnt         : natural    := 0;
-  signal   start_sample_vect : std_ulogic_vector(2 downto 0); -- Resampling of the start signal
+  signal   start_sample_vect : std_ulogic_vector(2 downto 0);                  -- Resampling of the start signal
   signal   start_re          : std_ulogic;
 
 begin

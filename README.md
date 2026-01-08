@@ -1,43 +1,57 @@
 # 🕒 Parametric Timer
 
-A VHDL design for a simple **parametric timer** module with generic clock frequency and delay time.
+A VHDL design for a configurable **parametric timer** module with generic clock frequency and delay duration.
 
 ---
 
-## 📐 Overview
+## 📊 Overview
 
-The timer's threshold counter is calculated using the formula:
+The timer generates a delay by counting clock cycles. The number of required cycles (threshold) is computed using the relationship:
 
 ```
 Threshold = Delay / Clock_Period
 ```
 
-To avoid overflow or underflow (e.g., clamping to 0), the calculation is broken into two parts:
-
-1. **Clock Period Calculation**  
-   The clock period is computed as:
-
-   ```
-   Period = 1 sec / CLK_FREQ_HZ_G
-   ```
-
-   This is an operation between a `time` and a `natural`, resulting in a `time` value.
-
-   > ⚠️ Since the maximum representable `time` in VHDL is `9223372036854775807 fs`, clamping from this operation is extremely unlikely, even with very high clock frequencies.
-
-2. **Threshold Derivation**  
-   The required threshold is then determined by dividing the desired delay by the computed period:
-
-   ```
-   Threshold = Delay / Period
-   ```
-
-   This is a division between two `time` values and produces an `integer`.
+To avoid numerical issues such as overflow or underflow (e.g., clamping to zero), the computation is split into two steps.
 
 ---
 
-## 🔒 Safety Check
+## ⏱️ Clock Period Calculation
 
-If the computed threshold results in **0** (i.e., if the delay is smaller than the clock period), it is **clamped to 1**, ensuring that the timer always waits at least one clock cycle.
+The clock period is derived from the generic clock frequency:
+
+```vhdl
+CLK_PERIOD := 1.0 / real(CLK_FREQ_HZ_G);
+```
+
+The result is stored as a `real` value to preserve precision.  
+Assuming a maximum clock frequency of **1 GHz**, the precision provided by the `real` type is more than sufficient to accurately represent the clock period.
+
+---
+
+## 🢶 Threshold Derivation
+
+The delay generic (`DELAY_G`), provided as a VHDL `time` type, is first normalized:
+
+```vhdl
+DELAY_REAL_NS := real(DELAY_G / 1 ns) / 1_000_000_000.0;
+```
+
+This converts the delay into seconds, represented as a `real`.  
+The required number of clock cycles is then computed as:
+
+```vhdl
+COUNT_THRESHOLD := natural(ceil(DELAY_REAL_NS / CLK_PERIOD));
+```
+
+Given the maximum guaranteed range of the VHDL `integer` type and a resolution of 1 ns, the maximum supported delay is approximately **2.147 seconds**, which is sufficient for most timing applications.
+
+---
+
+## 🔒 Safety Considerations
+
+- If the computed threshold is less than one clock cycle, it is implicitly clamped to **1**, guaranteeing a minimum delay of one cycle.
+- The `start_i` input is resynchronized internally using a multi-stage shift register to mitigate metastability when crossing clock domains.
+- The timer output (`done_o`) is derived purely from the FSM state to ensure glitch-free behavior.
 
 ---
