@@ -117,11 +117,8 @@ begin
       wait until done = '0';
       start_time   := now;
       start        <= '0';
-      wait for DELAY_G / 2;
+      wait for time_delay / 2;
       start        <= '1';
-      wait until rising_edge(clk);
-      wait until rising_edge(clk);
-      start        <= '0';
       wait until done = '1';
       time_elapsed := now - start_time;
       if (time_elapsed > time_delay - time_precision and time_elapsed < time_delay + time_precision) then
