@@ -51,7 +51,23 @@ Given the maximum guaranteed range of the VHDL `integer` type and a resolution o
 ## 🔒 Safety Considerations
 
 - If the computed threshold is less than one clock cycle, it is implicitly clamped to **1**, guaranteeing a minimum delay of one cycle.
-- The `start_i` input is resynchronized internally using a multi-stage shift register to mitigate metastability when crossing clock domains.
+- The `start_i` signal is assumed to be synchronous with the timer’s clock domain. Therefore, to avoid introducing unnecessary latency, no metastability mitigation or resynchronization logic is included for this signal.
 - The timer output (`done_o`) is derived purely from the FSM state to ensure glitch-free behavior.
 
 ---
+
+## 📝 Notes and Assumptions
+
+- The timer delay is measured from the **falling edge of `done_o`** to its **rising edge**.  
+  If your use case measures delay from the rising edge of `start_i`, you should account for an **extra clock cycle**.
+
+- In simulation, the **clock signal is generated with femtosecond (fs) resolution**.  
+  However, due to rounding during real-number computations (e.g., converting frequency to time), the actual simulated clock period may slightly differ from the ideal one.  
+  This results in **small cumulative errors** over time.
+
+- In some corner cases, this **accumulated timing error** may cause the measured delay to differ by more than one clock period, leading to test failures.
+
+- To account for this, a **tolerance margin of 0.001% of the requested delay** is used when comparing expected vs. actual timing in simulation.  
+  If the measured delay is within this range, the test is considered successful.
+
+- Note: an alternative would be to check the **number of clock cycles** elapsed, which would eliminate timing error — but this would make the testbench logic **too similar** to the DUT, reducing the value of the test itself.
