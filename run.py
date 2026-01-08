@@ -41,9 +41,9 @@ tb_timer = lib_tb.entity("tb_timer")
 
 random.seed(42)  # Reproducibility
 
-for i in range(50):
+for i in range(100):
     freq = random.randint(1, 100_000_000)
-    delay = random.randint(0, 1_000_000)
+    delay = random.randint(0, 100_000_000)
     tb_timer.add_config(
         name=f"{freq}Hz__Delay_{delay}_ns",
         generics={
@@ -56,6 +56,26 @@ for i in range(50):
 # Default configuration (no generics overridden)
 # -----------------------------------------------------------------------------
 tb_timer.add_config(name="default")
+
+# -----------------------------------------------------------------------------
+# Corner cases
+# -----------------------------------------------------------------------------
+
+# tb_timer.add_config(
+#         name=f"Max_freq_and_delay",
+#         generics={
+#             "CLK_FREQ_HZ_G": 1_000_000_000,   --Tested once succesfully, commented due to extremely long computation time
+#             "DELAY_NS_G" : 2_000_000_000
+#         }
+# )       
+
+tb_timer.add_config(
+        name=f"0_Delay",
+        generics={
+            "CLK_FREQ_HZ_G": 100_000_000,
+            "DELAY_NS_G" : 0
+        }
+)   
 
 # -----------------------------------------------------------------------------
 # Run VUnit

@@ -80,10 +80,26 @@ begin
 
     test_runner_setup(runner, RUNNER_CFG);
 
+    if (DELAY_G >= CLK_PERIOD_FS) then
+      time_delay := DELAY_G;
+    else
+      time_delay := CLK_PERIOD_FS;
+    end if;
+
+    if (CLK_PERIOD_FS > time_delay / 1000) then
+      time_precision <= CLK_PERIOD_FS;
+    else
+      time_precision <= time_delay / 1000;
+    end if;
+
     ----------------------------------------------------------------
-    -- Test 1: reset clears counter
+    -- Test 0: reset is respected
     ----------------------------------------------------------------
-    if run("reset_sets_done") then
+    if run("reset_is_respected") then
+      apply_reset(rst, clk);
+      start <= '1';
+      wait until done = '0';
+      start <= '0';
       apply_reset(rst, clk);
       check_equal(
             done,
@@ -93,22 +109,47 @@ begin
     end if;
 
     ----------------------------------------------------------------
-    -- Test 2: counter increments when enabled
+    -- Test 1: start is ignored while busy
+    ----------------------------------------------------------------
+    if run("start_is_ignored_while_busy") then
+      apply_reset(rst, clk);
+      start        <= '1';
+      wait until done = '0';
+      start_time   := now;
+      start        <= '0';
+      wait for DELAY_G / 2;
+      start        <= '1';
+      wait until rising_edge(clk);
+      wait until rising_edge(clk);
+      start        <= '0';
+      wait until done = '1';
+      time_elapsed := now - start_time;
+      if (time_elapsed > time_delay - time_precision and time_elapsed < time_delay + time_precision) then
+        check_passed;
+      else
+        log("Time_elapsed = " & time'image(time_elapsed));
+        log("Time_precision = " & time'image(time_precision));
+        if (time_elapsed > time_delay) then
+          log("Time_difference = " & time'image(time_elapsed - time_delay));
+        else
+          log("Time_difference = " & time'image(time_delay - time_elapsed));
+        end if;
+        log("Period = " & time'image(CLK_PERIOD_FS));
+        check_failed("Elapsed time does not correspond to the delay");
+      end if;
+    end if;
+
+    ----------------------------------------------------------------
+    -- Test 2: timer waits the correct amount of time
     ----------------------------------------------------------------
     if run("waits_the_correct_amount_of_time") then
       apply_reset(rst, clk);
-      if (DELAY_G >= CLK_PERIOD_FS) then
-        time_delay := DELAY_G;
-      else
-        time_delay := CLK_PERIOD_FS;
-      end if;
-      time_precision <= CLK_PERIOD_FS;
-      start          <= '1';
+      start        <= '1';
       wait until done = '0';
-      start_time     := now;
-      start          <= '0';
+      start_time   := now;
+      start        <= '0';
       wait until done = '1';
-      time_elapsed   := now - start_time;
+      time_elapsed := now - start_time;
       if (time_elapsed > time_delay - time_precision and time_elapsed < time_delay + time_precision) then
         check_passed;
       else
@@ -129,7 +170,7 @@ begin
 
   end process main;
 
-  test_runner_watchdog(runner, (2*DELAY_G + 20*CLK_PERIOD_FS));
+  test_runner_watchdog(runner, (2*DELAY_G + 20*CLK_PERIOD_FS)); -- Watchdog to avoid endless looping
 
 end architecture tb;
 
