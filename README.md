@@ -1,8 +1,12 @@
 # 🕒 Parametric Timer
 
+![VUnit CI](https://github.com/M-Deren/parametric_timer/actions/workflows/ci.yml/badge.svg)
+
 A VHDL design for a configurable **parametric timer** module with generic clock frequency and delay duration.
 
 ---
+
+
 
 ## 📊 Overview
 
