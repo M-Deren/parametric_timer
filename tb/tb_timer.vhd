@@ -19,7 +19,7 @@ end entity tb_timer;
 architecture tb of tb_timer is
 
   constant CLK_PERIOD     : real := 1.0 / real(CLK_FREQ_HZ_G);
-  constant CLK_PERIOD_FS  : time := round((CLK_PERIOD * 1_000_000_000_000_000.0)) * 1 fs;
+  constant CLK_PERIOD_FS  : time := round((CLK_PERIOD * 1_000_000_000_000_000.0)) * 1 fs; -- The clock period is calculated in fs to minimize the approximation error
   constant DELAY_G        : time := DELAY_NS_G * 1 ns;
 
   signal   clk            : std_ulogic := '0';
@@ -72,7 +72,7 @@ begin
 
   main : process is
 
-    variable time_delay   : time  := 0 ns;
+    variable time_delay   : time  := 0 ns;        -- Requested delay
     variable start_time   : time := 0 ns;
     variable time_elapsed : time := 0 ns;
 
@@ -80,22 +80,22 @@ begin
 
     test_runner_setup(runner, RUNNER_CFG);
 
-    if (DELAY_G >= CLK_PERIOD_FS) then
+    if (DELAY_G >= CLK_PERIOD_FS) then              -- Selects the clock period as the delay if the requested one is too small
       time_delay := DELAY_G;
     else
       time_delay := CLK_PERIOD_FS;
     end if;
 
-    if (CLK_PERIOD_FS > time_delay / 1000) then
+    if (CLK_PERIOD_FS > time_delay / 100000) then   -- Selects the correct precision for the test
       time_precision <= CLK_PERIOD_FS;
     else
-      time_precision <= time_delay / 1000;
+      time_precision <= time_delay / 100000;
     end if;
 
     ----------------------------------------------------------------
     -- Test 0: reset is respected
     ----------------------------------------------------------------
-    if run("reset_is_respected") then
+    if run("reset_is_respected") then               -- Verifies that the module is reset correctly
       apply_reset(rst, clk);
       start <= '1';
       wait until done = '0';
@@ -104,14 +104,14 @@ begin
       check_equal(
             done,
             '1',
-            "done should be high at reset"
+            "Done should be high at reset"
             );
     end if;
 
     ----------------------------------------------------------------
     -- Test 1: start is ignored while busy
     ----------------------------------------------------------------
-    if run("start_is_ignored_while_busy") then
+    if run("start_is_ignored_while_busy") then      -- Toggles start after half the delay and verifies that the result isn't compromised
       apply_reset(rst, clk);
       start        <= '1';
       wait until done = '0';
@@ -142,7 +142,7 @@ begin
     ----------------------------------------------------------------
     -- Test 2: timer waits the correct amount of time
     ----------------------------------------------------------------
-    if run("waits_the_correct_amount_of_time") then
+    if run("waits_the_correct_amount_of_time") then -- Verifies that the elapsed time is within either +-1 clock period or +-0,001% of the requested delay
       apply_reset(rst, clk);
       start        <= '1';
       wait until done = '0';
