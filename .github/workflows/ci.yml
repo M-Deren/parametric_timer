@@ -23,6 +23,7 @@ jobs:
           make -j$(nproc)
           sudo make install
           cd ..
+          
 
       - name: Run VUnit tests
         run: python run.py
