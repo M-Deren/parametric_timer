@@ -1,6 +1,7 @@
 library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
+  use ieee.math_real.all;
 
 library vunit_lib;
   context vunit_lib.vunit_context;
@@ -17,7 +18,8 @@ end entity tb_timer;
 
 architecture tb of tb_timer is
 
-  constant CLK_PERIOD     : time := (1 sec / CLK_FREQ_HZ_G);
+  constant CLK_PERIOD     : real := 1.0 / real(CLK_FREQ_HZ_G);
+  constant CLK_PERIOD_FS  : time := round((CLK_PERIOD * 1_000_000_000_000_000.0)) * 1 fs;
   constant DELAY_G        : time := DELAY_NS_G * 1 ns;
 
   signal   clk            : std_ulogic := '0';
@@ -60,9 +62,9 @@ begin
     while true loop
 
       clk <= '0';
-      wait for CLK_PERIOD / 2;
+      wait for CLK_PERIOD_FS / 2;
       clk <= '1';
-      wait for CLK_PERIOD / 2;
+      wait for CLK_PERIOD_FS / 2;
 
     end loop;
 
@@ -95,12 +97,12 @@ begin
     ----------------------------------------------------------------
     if run("waits_the_correct_amount_of_time") then
       apply_reset(rst, clk);
-      if (DELAY_G >= CLK_PERIOD) then
+      if (DELAY_G >= CLK_PERIOD_FS) then
         time_delay := DELAY_G;
       else
-        time_delay := CLK_PERIOD;
+        time_delay := CLK_PERIOD_FS;
       end if;
-      time_precision <= time_delay / 500;
+      time_precision <= CLK_PERIOD_FS;
       start          <= '1';
       wait until done = '0';
       start_time     := now;
@@ -117,40 +119,9 @@ begin
         else
           log("Time_difference = " & time'image(time_delay - time_elapsed));
         end if;
-        log("Period = " & time'image(CLK_PERIOD));
+        log("Period = " & time'image(CLK_PERIOD_FS));
         check_failed("Elapsed time does not correspond to the delay");
       end if;
-      -- wait for (time_delay - time_precision);
-      -- if (done = '0') then
-      --   wait for 2 * (time_precision);
-      --   if (done = '1') then
-      --     check_passed;
-      --   else
-      --     log("Time = " & time'image(time_delay));
-      --     log("Period = " & time'image(CLK_PERIOD));
-      --     check_failed("Done should be high right after the timeout");
-      --   end if;
-      -- else
-      --   log("Time = " & time'image(time_delay));
-      --   log("Period = " & time'image(CLK_PERIOD));
-      --   check_failed("Done should be low right before the timeout");
-      -- end if;
-
-      --   while done = '0' loop
-
-      --     time_elapsed := time_elapsed + CLK_PERIOD;
-      --     time_debug   <= time_elapsed;
-      --     wait until rising_edge(clk);
-
-      --   end loop;
-
-      --   if (DELAY_G - CLK_PERIOD < time_elapsed and time_elapsed < DELAY_G + CLK_PERIOD) then
-      --     check_passed;
-      --   else
-      --     log("Time = " & time'image(time_elapsed));
-      --     log("Period = " & time'image(CLK_PERIOD));
-      --     check_failed("The elapsed time should be within +- 1 clock period of the desired delay");
-      --   end if;
     end if;
 
     test_runner_cleanup(runner);
@@ -158,7 +129,7 @@ begin
 
   end process main;
 
-  test_runner_watchdog(runner, (2*DELAY_G + 20*CLK_PERIOD));
+  test_runner_watchdog(runner, (2*DELAY_G + 20*CLK_PERIOD_FS));
 
 end architecture tb;
 
