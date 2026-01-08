@@ -20,17 +20,6 @@ end entity timer;
 
 architecture rtl of timer is
 
-  function clamp_min_one (x : real) return natural is                          -- Clamps the minimum threshold value to 1
-  begin
-
-    if (x < 1.0) then
-      return 1;
-    else
-      return natural(x);
-    end if;
-
-  end function clamp_min_one;
-
   constant CLK_PERIOD        : real := (1.0 / real(CLK_FREQ_HZ_G));
   constant DELAY_REAL_NS     : real := real(DELAY_G / 1 ns) / 1_000_000_000.0; -- Delay in ns as a floating number
   constant COUNT_THRESHOLD   : natural := natural(ceil(DELAY_REAL_NS / CLK_PERIOD));
