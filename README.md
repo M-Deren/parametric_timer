@@ -75,3 +75,9 @@ Given the maximum guaranteed range of the VHDL `integer` type and a resolution o
   If the measured delay is within this range, the test is considered successful.
 
 - Note: an alternative would be to check the **number of clock cycles** elapsed, which would eliminate timing error — but this would make the testbench logic **too similar** to the DUT, reducing the value of the test itself.
+
+## 📝 Running VUnit Tests Locally
+
+To run the VUnit tests locally, simply execute the `run_tests.bat` script located in the project root directory. This will launch all tests, including the default configuration and 100 randomized configurations to verify correct delay behavior.
+
+For Linux users, you can copy the commands from the `.bat` file and run them manually in a terminal opened in the project directory, or create an equivalent shell script (e.g., `run_tests.sh`) for convenience.
