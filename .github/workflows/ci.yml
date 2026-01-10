@@ -58,7 +58,7 @@ jobs:
       - name: Verify tool installation
         run: |
           yosys -V
-          sby --version
+          sby --help
           yosys-smtbmc --help | head -n 1
 
       - name: Run formal proof
