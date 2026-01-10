@@ -5,8 +5,8 @@
 
 entity timer is
   generic (
-    CLK_FREQ_HZ_G : natural;          -- Clock frequency in Hz
-    DELAY_G       : time              -- Delay duration, e.g., 100 ms
+    CLK_FREQ_HZ_G : natural := 1_000_000;          -- Clock frequency in Hz
+    DELAY_G       : time := 100 ms              -- Delay duration, e.g., 100 ms
   );
   port (
     clk_i         : in    std_ulogic;
@@ -70,5 +70,20 @@ begin
   start_re <= start_i and not start_d1; -- Rising edge is combinatorial to minimize latency
   done_o   <= '1' when state = idle else
               '0';
+
+    ------------------------------------------------------------------------------
+  -- PSL
+  ------------------------------------------------------------------------------
+
+  -- psl default clock is rising_edge(clk_i);
+
+  -- psl assume always (start_i = prev(start_i) or rising_edge(clk_i));
+
+  -- psl assert always (COUNT_THRESHOLD > 0);
+
+  -- psl assert always (
+  --   (done_o = '1' and start_re = '1') |->
+  --     (done_o = '0')[*COUNT_THRESHOLD] ##1 (done_o = '1')
+  -- );
 
 end architecture rtl;

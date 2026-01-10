@@ -1,0 +1,14 @@
+[options]
+mode prove
+depth 200
+
+[engines]
+smtbmc
+
+[script]
+plugin -i ghdl
+ghdl --std=08 ../src/timer.vhd -e timer
+prep -top timer
+
+[files]
+../src/timer.vhd
