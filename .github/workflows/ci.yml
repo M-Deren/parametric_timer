@@ -11,6 +11,7 @@ on:
 
 jobs:
   vunit-ghdl:
+    name: Run VUnit Verification
     runs-on: ubuntu-latest
 
     steps:
