@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - test-ci
+      - formal-ci
   pull_request:
   workflow_dispatch:
 
