@@ -38,3 +38,31 @@ jobs:
               python run.py tb.tb_timer.default.start_is_ignored_while_busy
               python run.py tb.tb_timer.*.waits_the_correct_amount_of_time
 
+  formal-verification:
+    name: Run Formal Verification (SymbiYosys)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install OSS CAD Suite
+        run: |
+          sudo apt update
+          sudo apt install -y wget xz-utils
+          wget https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2023-11-01/oss-cad-suite-linux-x64-20231101.tgz
+          tar -xzf oss-cad-suite-linux-x64-20231101.tgz
+          echo "$PWD/oss-cad-suite/bin" >> $GITHUB_PATH
+
+      - name: Verify tool installation
+        run: |
+          yosys -V
+          sby --version
+          yosys-smtbmc --help | head -n 1
+
+      - name: Run formal proof
+        working-directory: formal
+        run: |
+          sby -f timer_proof.sby
+
+
