@@ -65,6 +65,8 @@ Given the maximum guaranteed range of the VHDL `integer` type and a resolution o
 - The timer delay is measured from the **falling edge of `done_o`** to its **rising edge**.  
   If your use case measures delay from the rising edge of `start_i`, you should account for an **extra clock cycle**.
 
+- The module has been successfully synthesized using Vivado, confirming that all **real** and **time** based computations are resolved at elaboration.
+
 - In simulation, the **clock signal is generated with femtosecond (fs) resolution**.  
   However, due to rounding during real-number computations (e.g., converting frequency to time), the actual simulated clock period may slightly differ from the ideal one.  
   This results in **small cumulative errors** over time.
