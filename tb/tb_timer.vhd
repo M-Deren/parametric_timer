@@ -1,7 +1,7 @@
 library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-  use ieee.math_real.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 library vunit_lib;
   context vunit_lib.vunit_context;
@@ -10,17 +10,17 @@ library rtl;
 
 entity tb_timer is
   generic (
-    RUNNER_CFG    : string;
-    CLK_FREQ_HZ_G : natural := 1_000; -- Clock frequency in Hz
-    DELAY_NS_G    : natural := 10_000_000
+    runner_cfg    : string;
+    clk_freq_hz_g : natural := 1_000; -- Clock frequency in Hz
+    delay_ns_g    : natural := 10_000_000
   );
 end entity tb_timer;
 
 architecture tb of tb_timer is
 
-  constant CLK_PERIOD     : real := 1.0 / real(CLK_FREQ_HZ_G);
-  constant CLK_PERIOD_FS  : time := round((CLK_PERIOD * 1_000_000_000_000_000.0)) * 1 fs; -- The clock period is calculated in fs to minimize the approximation error
-  constant DELAY_G        : time := DELAY_NS_G * 1 ns;
+  constant CLK_PERIOD    : real := 1.0 / real(clk_freq_hz_g);
+  constant CLK_PERIOD_FS : time := round((CLK_PERIOD * 1_000_000_000_000_000.0)) * 1 fs; -- The clock period is calculated in fs to minimize the approximation error
+  constant DELAY_G       : time := delay_ns_g * 1 ns;
 
   signal   clk            : std_ulogic := '0';
   signal   rst            : std_ulogic := '0';
@@ -40,21 +40,21 @@ architecture tb of tb_timer is
     rst <= '0';
     wait until rising_edge(clk);
 
-  end procedure;
+  end procedure apply_reset;
 
 begin
 
   dut : entity rtl.timer
-    generic map (
-      CLK_FREQ_HZ_G => CLK_FREQ_HZ_G,
-      DELAY_G       => DELAY_G
-    )
-    port map (
-      clk_i         => clk,
-      arst_i        => rst,
-      start_i       => start,
-      done_o        => done
-    );
+  generic map (
+    clk_freq_hz_g => clk_freq_hz_g,
+    delay_g       => DELAY_G
+  )
+  port map (
+    clk_i   => clk,
+    arst_i  => rst,
+    start_i => start,
+    done_o  => done
+  );
 
   clk_gen : process is
   begin
@@ -71,14 +71,12 @@ begin
   end process clk_gen;
 
   main : process is
-
     variable time_delay   : time  := 0 ns;        -- Requested delay
     variable start_time   : time := 0 ns;
     variable time_elapsed : time := 0 ns;
-
   begin
 
-    test_runner_setup(runner, RUNNER_CFG);
+    test_runner_setup(runner, runner_cfg);
 
     if (DELAY_G >= CLK_PERIOD_FS) then              -- Selects the clock period as the delay if the requested one is too small
       time_delay := DELAY_G;
@@ -98,14 +96,14 @@ begin
     if run("reset_is_respected") then               -- Verifies that the module is reset correctly
       apply_reset(rst, clk);
       start <= '1';
-      wait until done = '0';
+      wait for time_delay/2;
       start <= '0';
       apply_reset(rst, clk);
       check_equal(
-            done,
-            '1',
-            "Done should be high at reset"
-            );
+                  done,
+                  '1',
+                  "Done should be high at reset"
+                );
     end if;
 
     ----------------------------------------------------------------
@@ -114,8 +112,8 @@ begin
     if run("start_is_ignored_while_busy") then      -- Toggles start after half the delay and verifies that the result isn't compromised
       apply_reset(rst, clk);
       start        <= '1';
-      wait until done = '0';
       start_time   := now;
+      wait until rising_edge(clk);
       start        <= '0';
       wait for time_delay / 2;
       start        <= '1';
@@ -142,8 +140,8 @@ begin
     if run("waits_the_correct_amount_of_time") then -- Verifies that the elapsed time is within either +-1 clock period or +-0,001% of the requested delay
       apply_reset(rst, clk);
       start        <= '1';
-      wait until done = '0';
       start_time   := now;
+      wait until rising_edge(clk);
       start        <= '0';
       wait until done = '1';
       time_elapsed := now - start_time;
