@@ -99,10 +99,11 @@ begin
       wait for time_delay/2;
       start <= '0';
       apply_reset(rst, clk);
+      wait for time_delay/2;
       check_equal(
                   done,
-                  '1',
-                  "Done should be high at reset"
+                  '0',
+                  "Done should be low at reset"
                 );
     end if;
 
