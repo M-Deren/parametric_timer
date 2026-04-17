@@ -70,13 +70,13 @@ tb_timer.add_config(name="default")
 #         }
 # )       
 
-tb_timer.add_config(
-        name=f"0_Delay",
-        generics={
-            "CLK_FREQ_HZ_G": 100_000_000,
-            "DELAY_NS_G" : 0
-        }
-)   
+# tb_timer.add_config(
+#         name=f"0_Delay",
+#         generics={
+#             "CLK_FREQ_HZ_G": 100_000_000,
+#             "DELAY_NS_G" : 0
+#         }
+# )   
 
 # -----------------------------------------------------------------------------
 # Run VUnit
